@@ -6,12 +6,17 @@ __pycache__/
 venv/
 .pytest_cache/
 .mypy_cache/
+.coverage
+htmlcov/
+.ruff_cache/
 
 # Project
 data/
 logs/
 *.db
 *.db-journal
+*.sqlite
+*.sqlite3
 *.log
 
 # Secrets
@@ -20,7 +25,17 @@ logs/
 *.pem
 *.key
 
+# Windows
+Thumbs.db
+Desktop.ini
+
 # IDE
 .vscode/
 .idea/
 *.swp
+*.bak
+*~
+
+# Build
+dist/
+build/
