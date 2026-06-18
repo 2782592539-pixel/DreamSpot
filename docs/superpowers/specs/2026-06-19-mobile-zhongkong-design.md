@@ -253,10 +253,10 @@ Claude Code 自己的会话历史存在 `~/.claude/projects/<encoded-path>/<sess
     │                        ├──────────────────────────────────────────────►│             │
 ```
 
-**防双触发策略**(方案 A - 推荐先用):
+**防双触发策略**(策略 P1 - 推荐先用):
 - 中控服务抢先触发后,在 `scheduled_tasks.json` 中改写 `last_run` 字段
 - Claude Code 看到 `last_run` 很新(< 任务周期),会跳过本次触发
-- **如果 Claude Code 不尊重 `last_run`,切换到方案 B**(中控服务改写为中控自己的格式,Claude Code 看到空 JSON 不触发)
+- **如果 Claude Code 不尊重 `last_run`,切换到策略 P2**(中控服务改写为中控自己的格式,Claude Code 看到空 JSON 不触发)
 
 ### 4.4 流程 ④ 飞书卡片按钮回调(交互入口)
 
@@ -280,6 +280,11 @@ Claude Code 自己的会话历史存在 `~/.claude/projects/<encoded-path>/<sess
     │                       │                       │ 触发 claude -p        │
     │                       │                       ├──────────────────────►│
 ```
+
+**鉴权说明**:
+- 飞书 webhook 路径(`/feishu/webhook`)需要在 Cloudflare Access 配置中**单独放行**飞书服务器的 IP 段(飞书官方 IP 白名单),或者用 Cloudflare Tunnel 的 `--no-tls-verify` + 专用子域名绕过 Access。
+- 推荐做法:中控服务在 `/feishu/webhook` 路由上**只校验飞书签名**(`X-Lark-Signature`),不依赖 CF Access 的浏览器登录态。
+- 飞书签名校验失败时,中控服务返回 401 并记录到 `audit_log`,飞书会自动重试 3 次。
 
 ---
 
@@ -438,7 +443,7 @@ CREATE TABLE audit_log (
 | `claude -p` 输出过大(>10MB) | 截断到 10MB 存 SQLite,完整内容写到 `~/.claude/projects/.../run_xxx.log` | 详情页提示"日志已截断" |
 | `scheduled_tasks.json` 损坏 | 中控服务启动失败,显示明确错误 | 飞书推"🚨 JSON 文件损坏,人工修复" |
 | CF Access 服务挂了 | Cloudflare 自己的,概率极低 | 暂时禁用 CF Access 鉴权,只靠中控服务 token(降级) |
-| 电脑休眠唤醒后 | 重新跑开机自检流程 | 唤醒后 1 分钟内恢复所有功能 |
+| 电脑休眠唤醒后 | NSSM 拉起中控服务 → reload `scheduled_tasks.json` → 重建 APScheduler → 触发 wakeup_event 飞书通知 | 唤醒后 1 分钟内恢复所有功能,中控发送"💤→☀️ 已唤醒"通知 |
 
 ### 6.3 致命的异常(必须人工介入)
 
@@ -613,7 +618,7 @@ nssm restart MzcControl
 
 ## 八、待定项 (Open Questions)
 
-1. **防双触发**:方案 A (改 `last_run`) 是否被 Claude Code 尊重?需要跑通后验证。
+1. **防双触发**:策略 P1 (改 `last_run`) 是否被 Claude Code 尊重?需要跑通后验证。
 2. **Claude Code 内部 API**:未来是否会有官方"任务查询"接口?关注 Anthropic 公告。
 3. **Tailscale 备选**:Cloudflare Access 出问题时是否切换?需要 Tailscale 账号先开好备用。
 
