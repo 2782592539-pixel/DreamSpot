@@ -1,5 +1,6 @@
 """Wrapper around `claude -p` subprocess for one-shot task execution."""
 import logging
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -30,9 +31,36 @@ class ClaudeRunResult:
         return "failed"
 
 
+def _validate_cli_path(claude_cli: str) -> str:
+    """Resolve and validate the claude CLI path.
+
+    Defense-in-depth: ensure the configured path is resolvable on disk
+    before passing it to subprocess. Catches typos and misconfigurations
+    in MZC_CLAUDE_CLI env var.
+
+    Returns the resolved absolute path. Raises ValueError if not found.
+    """
+    if not claude_cli or not claude_cli.strip():
+        raise ValueError("claude_cli is empty; set MZC_CLAUDE_CLI or pass explicitly")
+    # shutil.which returns the resolved path if found on PATH, or None
+    resolved = shutil.which(claude_cli)
+    if resolved is None:
+        # Also try the literal path (might be an absolute or relative path with slashes)
+        p = Path(claude_cli)
+        if p.is_file():
+            resolved = str(p.resolve())
+        else:
+            raise ValueError(
+                f"claude_cli '{claude_cli}' not found on PATH. "
+                f"Set MZC_CLAUDE_CLI to a valid claude binary path."
+            )
+    return resolved
+
+
 class ClaudeRunner:
     def __init__(self, claude_cli: str | None = None, timeout_sec: int = DEFAULT_TIMEOUT_SEC):
-        self.claude_cli = claude_cli or get_settings().claude_cli
+        configured = claude_cli if claude_cli is not None else get_settings().claude_cli
+        self.claude_cli = _validate_cli_path(configured)
         self.timeout_sec = timeout_sec
 
     def run(self, prompt: str, working_dir: Path | None = None) -> ClaudeRunResult:

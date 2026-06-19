@@ -50,3 +50,15 @@ def test_run_uses_pty_false():
         # On Windows, creationflags should be set
         if "creationflags" in call_kwargs:
             assert call_kwargs["creationflags"] > 0
+
+
+def test_invalid_cli_path_raises_at_init():
+    """A nonexistent claude_cli should fail fast at construction, not at run()."""
+    with pytest.raises(ValueError, match="not found on PATH"):
+        ClaudeRunner(claude_cli="definitely-not-a-real-binary-xyz", timeout_sec=10)
+
+
+def test_empty_cli_path_raises_at_init():
+    """An empty claude_cli should also fail fast."""
+    with pytest.raises(ValueError, match="empty"):
+        ClaudeRunner(claude_cli="", timeout_sec=10)
