@@ -73,6 +73,23 @@ class HistoryStore:
                 (msg_id, run_id),
             )
 
+    def update(self, record: RunRecord) -> None:
+        """Update an existing run record (by id)."""
+        if record.id is None:
+            raise ValueError("Cannot update record without id")
+        with get_connection() as conn:
+            conn.execute(
+                """UPDATE runs SET
+                   finished_at = :finished_at,
+                   status = :status,
+                   exit_code = :exit_code,
+                   output = :output,
+                   output_summary = :output_summary,
+                   duration_sec = :duration_sec
+                   WHERE id = :id""",
+                {**record.to_row(), "id": record.id},
+            )
+
     def _row_to_record(self, row) -> RunRecord:
         return RunRecord(
             id=row["id"],
