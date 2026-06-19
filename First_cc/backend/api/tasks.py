@@ -83,7 +83,7 @@ def run_task(task_id: str) -> dict:
         # Timeout: record the failure with status='timeout'
         record.finished_at = datetime.now()
         record.status = "timeout"
-        record.error = str(e)
+        record.output_summary = f"Timeout: {e}"
         record.duration_sec = int((record.finished_at - record.started_at).total_seconds())
         HistoryStore().update(record)
         # Update last_run in JSON
