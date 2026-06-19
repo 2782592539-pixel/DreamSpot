@@ -1,6 +1,6 @@
 """服务状态相关接口。"""
 from datetime import datetime, timezone
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 router = APIRouter(
     prefix="/api/system",
@@ -17,3 +17,10 @@ def get_status() -> dict:
         "version": "0.1.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@router.get("/jobs", summary="查看已调度的任务", description="返回 APScheduler 当前注册的所有 MZC 任务(含下次执行时间)。")
+def get_scheduled_jobs(request: Request) -> list[dict]:
+    """Return all currently scheduled APScheduler jobs."""
+    scheduler = request.app.state.scheduler
+    return scheduler.get_jobs()
