@@ -113,3 +113,26 @@ def test_executor_handles_timeout(temp_data_dir):
             runs = conn.execute("SELECT * FROM runs WHERE task_id = 't_to'").fetchall()
         assert len(runs) == 1
         assert runs[0]["status"] == "timeout"
+
+
+def test_executor_pushes_feishu_on_success(temp_data_dir):
+    init_db()
+    _write_task_file(temp_data_dir, "t_feishu")
+
+    with patch("backend.services.executor.ClaudeRunner") as MockRunner, \
+         patch("backend.services.executor.httpx.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"code": 0, "msg": "ok"}
+
+        mock_instance = MagicMock()
+        mock_instance.run.return_value = ClaudeRunResult(
+            exit_code=0, output="done", error="",
+            started_at=datetime.now(), finished_at=datetime.now(),
+            duration_sec=1,
+        )
+        MockRunner.return_value = mock_instance
+
+        executor = TaskExecutor()
+        executor.tick("t_feishu", "do it")
+
+        assert mock_post.called
