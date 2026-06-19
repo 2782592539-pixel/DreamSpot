@@ -9,6 +9,9 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.api import system, tasks
 from backend.config import get_settings
+from backend.db.init_db import init_db
+from backend.services.executor import TaskExecutor
+from backend.services.scheduler import MzcScheduler
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +27,24 @@ async def lifespan(app: FastAPI):
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
     logger.info("MZC service starting (version=0.1.0)")
-    yield
-    logger.info("MZC service stopping")
+
+    # Ensure DB schema exists (idempotent)
+    init_db()
+
+    # Start scheduler with executor as tick handler
+    executor = TaskExecutor()
+    scheduler = MzcScheduler()
+    scheduler.set_tick_handler(executor.tick)
+    scheduler.start()
+    scheduler.reload_tasks()
+    app.state.scheduler = scheduler
+    app.state.executor = executor
+
+    try:
+        yield
+    finally:
+        scheduler.shutdown()
+        logger.info("MZC service stopping")
 
 
 def create_app() -> FastAPI:

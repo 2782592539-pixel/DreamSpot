@@ -11,3 +11,10 @@ def test_status_returns_ok(client):
 def test_status_includes_version(client):
     response = client.get("/api/system/status")
     assert response.json()["version"] == "0.1.0"
+
+
+def test_jobs_endpoint_empty(client):
+    """With no scheduled_tasks.json, /api/system/jobs should return []."""
+    response = client.get("/api/system/jobs")
+    assert response.status_code == 200
+    assert response.json() == []

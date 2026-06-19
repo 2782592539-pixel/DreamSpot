@@ -31,7 +31,8 @@ def temp_data_dir(monkeypatch, tmp_path):
 
 @pytest.fixture
 def client(temp_data_dir):
-    """FastAPI test client."""
+    """FastAPI test client with lifespan startup/shutdown."""
     from backend.main import create_app
     app = create_app()
-    return TestClient(app)
+    with TestClient(app) as c:
+        yield c
