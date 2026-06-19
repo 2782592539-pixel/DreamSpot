@@ -2,7 +2,7 @@
 
 > 日期:2026-06-19
 > 作者:H-yue (与 Claude Code 协作)
-> 状态:已实现 (commits: be8cc30, 9344662, 4ac6721, 7cda015, 9e95609, dfab33b)
+> 状态:已实现 (commits: e309c26, fd07348, 801cbbc, 8f15cfe, bb4766a, 0827340, 86514ec; merge 07a3a5c)
 > 范围:仅替换 FastAPI 自带的 `/docs` (Swagger UI) 与 `/redoc`,为 Phase 1 已有 3 个 endpoint 提供中文 + 暗色技术风文档页
 
 ---
