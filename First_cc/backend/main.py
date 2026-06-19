@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-from backend.api import system
+from backend.api import system, tasks
 from backend.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.include_router(system.router)
+    app.include_router(tasks.router)
     return app
 
 
