@@ -2,11 +2,46 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <title>MZC 移动中控</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MZC 移动中控 · API 文档</title>
   <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-  <p>占位 - 将在 Task 4 替换</p>
+  <header id="topbar">
+    <div class="brand">
+      <span class="logo">●</span>
+      <span class="title">MZC</span>
+      <span class="subtitle">移动中控</span>
+    </div>
+    <div class="meta">
+      <span class="version">v0.1.0</span>
+    </div>
+  </header>
+
+  <section id="statusbar">
+    <span class="status-label">服务状态:</span>
+    <span class="status-dot" id="health-dot" data-state="checking">●</span>
+    <span class="status-text" id="health-text">检查中...</span>
+    <span class="status-time" id="health-time"></span>
+  </section>
+
+  <main id="layout">
+    <aside id="sidebar">
+      <h2>目录</h2>
+      <nav id="nav-list"><!-- JS 渲染 --></nav>
+    </aside>
+
+    <section id="content">
+      <h1>API 文档</h1>
+      <p class="lead">从 Claude Code 同步的定时任务与系统接口,均可在线试调。</p>
+      <div id="endpoints"><!-- JS 渲染 --></div>
+    </section>
+  </main>
+
+  <footer id="footer">
+    <span>MZC · 家用 Claude Code 移动控制中心</span>
+  </footer>
+
   <script src="/assets/app.js"></script>
 </body>
 </html>
