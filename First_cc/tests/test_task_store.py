@@ -66,6 +66,7 @@ def test_add_task_writes_to_file(sample_json):
         name="New task",
         prompt="do x",
         schedule="*/5 * * * *",
+        enabled=True,
         created_at=datetime(2026, 6, 19, 10, 0),
     )
     store.add(new_task)

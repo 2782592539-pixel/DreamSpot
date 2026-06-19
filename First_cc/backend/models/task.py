@@ -5,21 +5,23 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class Task(BaseModel):
-    """A scheduled task. Matches Claude Code's JSON schema."""
-    id: str
-    name: str
-    prompt: str
-    schedule: str  # cron expression
-    enabled: bool = True
-    created_at: datetime
-    last_run: datetime | None = None
-    last_status: Literal["success", "failed", "timeout", "running", "never"] = "never"
+    """定时任务。镜像 Claude Code 的 JSON 字段,并扩展 MZC 自己的字段。"""
+    id: str = Field(..., description="任务唯一 ID,由 Claude Code 分配")
+    name: str = Field(..., description="任务显示名")
+    prompt: str = Field(..., description="任务执行的 prompt 文本")
+    schedule: str = Field(..., description="cron 表达式,例如 '0 9 * * *'")
+    enabled: bool = Field(..., description="是否启用")
+    created_at: datetime = Field(..., description="创建时间 (ISO 8601)")
+    last_run: datetime | None = Field(default=None, description="上次运行时间")
+    last_status: Literal["success", "failed", "timeout", "running", "never"] = Field(
+        default="never", description="上次运行状态"
+    )
 
-    # MZC extensions (not in Claude Code's JSON, but in our SQLite mirror)
-    created_by: str | None = None
-    tags: list[str] = Field(default_factory=list)
-    next_run_at: datetime | None = None
-    synced_at: datetime | None = None
+    # MZC 扩展字段(不在 Claude Code JSON 里,在 SQLite 镜像中)
+    created_by: str | None = Field(default=None, description="创建者标识")
+    tags: list[str] = Field(default_factory=list, description="任务标签")
+    next_run_at: datetime | None = Field(default=None, description="下次计划运行时间")
+    synced_at: datetime | None = Field(default=None, description="从 JSON 同步到 SQLite 的时间")
 
     @field_validator("tags", mode="before")
     @classmethod

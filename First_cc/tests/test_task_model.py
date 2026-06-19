@@ -10,6 +10,7 @@ def test_task_to_json_dict_excludes_mzc_fields():
         name="test",
         prompt="do something",
         schedule="0 9 * * *",
+        enabled=True,
         created_at=datetime(2026, 6, 19, 8, 0),
         created_by="H-yue",
         tags=["daily"],
@@ -27,6 +28,7 @@ def test_task_parses_tags_from_json_string():
         name="x",
         prompt="y",
         schedule="* * * * *",
+        enabled=True,
         created_at=datetime.now(),
         tags='["a","b"]',
     )
@@ -39,6 +41,7 @@ def test_task_default_status_is_never():
         name="x",
         prompt="y",
         schedule="* * * * *",
+        enabled=True,
         created_at=datetime.now(),
     )
     assert task.last_status == "never"
