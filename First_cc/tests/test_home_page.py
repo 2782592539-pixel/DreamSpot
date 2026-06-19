@@ -55,3 +55,19 @@ def test_css_contains_method_colors(client):
     # GET = blue, POST = green from spec
     assert "#58a6ff" in css  # GET / accent
     assert "#3fb950" in css  # POST / success
+
+
+def test_js_served(client):
+    response = client.get("/assets/app.js")
+    assert response.status_code == 200
+    # Content-Type may be text/javascript, application/javascript, or similar
+    ct = response.headers.get("content-type", "").lower()
+    assert "javascript" in ct or "ecmascript" in ct or "text/plain" in ct
+
+
+def test_js_fetches_openapi(client):
+    js = client.get("/assets/app.js").text
+    # JS should reference /openapi.json
+    assert "/openapi.json" in js
+    # JS should call fetch
+    assert "fetch(" in js
