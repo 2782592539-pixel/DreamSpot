@@ -3,14 +3,18 @@
 Strategy P1 (anti-dual-trigger): if a task was last_run within ~80% of the
 cron interval, assume Claude Code already triggered it and skip.
 """
+import json
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
+import httpx
 from croniter import croniter
 
 from backend.services.claude_runner import ClaudeRunner
+from backend.services.feishu_client import FeishuClient
 from backend.services.history_store import HistoryStore, RunRecord
+from backend.services.outbox import Outbox, OutboxItem
 from backend.services.task_store import TaskStore
 
 logger = logging.getLogger(__name__)
@@ -75,6 +79,9 @@ class TaskExecutor:
             f"(exit={result.exit_code}, dur={result.duration_sec}s)"
         )
 
+        # Push Feishu notification
+        self._push_feishu(task_id, record)
+
     def _should_fire(self, task_id: str) -> bool:
         try:
             tasks = TaskStore().load_all()
@@ -111,3 +118,39 @@ class TaskExecutor:
         if len(s.encode("utf-8")) <= max_bytes:
             return s
         return s.encode("utf-8")[:max_bytes].decode("utf-8", errors="ignore") + "\n\n[... truncated ...]"
+
+    def _push_feishu(self, task_id: str, record: RunRecord) -> None:
+        """Build a card and send via Feishu; on failure, enqueue to outbox."""
+        try:
+            tasks = TaskStore().load_all()
+            task = next((t for t in tasks if t.id == task_id), None)
+            task_name = task.name if task else task_id
+        except Exception:
+            task_name = task_id
+
+        try:
+            client = FeishuClient()
+            card = client.build_task_card(
+                task_name=task_name,
+                status=record.status,
+                output_summary=record.output_summary or "",
+                task_id=task_id,
+                run_id=record.id or 0,
+            )
+            payload_dict = card.to_dict()
+            webhook = client.webhook_url
+            try:
+                resp = httpx.post(webhook, json=payload_dict, timeout=10)
+                if resp.status_code == 200 and resp.json().get("code") == 0:
+                    HistoryStore().set_feishu_msg_id(record.id, str(record.id))
+                    return
+            except Exception as e:
+                logger.warning(f"Feishu send failed; enqueueing: {e}")
+
+            # Fallback: enqueue for retry
+            Outbox().enqueue(OutboxItem(
+                target_url=webhook,
+                payload=json.dumps(payload_dict, ensure_ascii=False),
+            ))
+        except Exception:
+            logger.exception("Feishu push failed entirely")
