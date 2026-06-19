@@ -40,3 +40,18 @@ def test_home_contains_key_sections(client):
     assert "id=\"statusbar\"" in html or 'id="statusbar"' in html
     # Sidebar element exists
     assert "id=\"sidebar\"" in html or 'id="sidebar"' in html
+
+
+def test_css_contains_dark_theme(client):
+    css = client.get("/assets/app.css").text
+    # Dark background color from the spec
+    assert "#0d1117" in css
+    # Card color
+    assert "#161b22" in css
+
+
+def test_css_contains_method_colors(client):
+    css = client.get("/assets/app.css").text
+    # GET = blue, POST = green from spec
+    assert "#58a6ff" in css  # GET / accent
+    assert "#3fb950" in css  # POST / success
