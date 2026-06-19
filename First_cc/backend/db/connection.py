@@ -1,12 +1,19 @@
 """SQLite connection management."""
 import sqlite3
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from backend.config import get_settings
 
 
 def get_db_path() -> Path:
     return Path(get_settings().db_path)
+
+
+# Register adapters so datetimes are stored as ISO strings and read back
+# as datetime objects (avoids Python 3.12 deprecation warning).
+sqlite3.register_adapter(datetime, lambda dt: dt.isoformat())
+sqlite3.register_converter("timestamp", lambda s: datetime.fromisoformat(s.decode("utf-8")))
 
 
 @contextmanager

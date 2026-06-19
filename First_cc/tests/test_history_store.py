@@ -1,13 +1,28 @@
 """Tests for history_store - SQLite runs CRUD."""
 import pytest
 from datetime import datetime
+from backend.db.connection import get_connection
 from backend.db.init_db import init_db
 from backend.services.history_store import HistoryStore, RunRecord
+
+
+def _seed_task(task_id: str) -> None:
+    """Insert a parent task row so the runs FK constraint is satisfied."""
+    with get_connection() as conn:
+        conn.execute(
+            """INSERT INTO tasks (id, name, prompt, schedule, enabled,
+               created_at, synced_at) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (task_id, f"Test task {task_id}", "test prompt", "0 9 * * *", 1,
+             "2026-06-19T08:00:00", "2026-06-19T08:00:00"),
+        )
 
 
 @pytest.fixture
 def store(temp_data_dir):
     init_db()
+    # Pre-seed tasks used by the tests so the FK on runs.task_id is satisfied
+    for tid in ("t_1", "t_a", "t_b"):
+        _seed_task(tid)
     return HistoryStore()
 
 
