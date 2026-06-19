@@ -1,12 +1,19 @@
 """FastAPI application entry point."""
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend.api import system, tasks
 from backend.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+STATIC_DIR = Path(__file__).parent / "static"
+INDEX_HTML = STATIC_DIR / "index.html"
 
 
 @asynccontextmanager
@@ -37,6 +44,12 @@ def create_app() -> FastAPI:
     )
     app.include_router(system.router)
     app.include_router(tasks.router)
+    app.mount("/assets", StaticFiles(directory=str(STATIC_DIR)), name="assets")
+
+    @app.get("/", include_in_schema=False)
+    def home() -> HTMLResponse:
+        return HTMLResponse(INDEX_HTML.read_text(encoding="utf-8"))
+
     return app
 
 
