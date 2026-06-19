@@ -20,10 +20,15 @@ def test_run_records_duration():
     assert result.started_at <= result.finished_at
 
 
-def test_run_timeout_raises(monkeypatch):
-    runner = ClaudeRunner(claude_cli="sleep", timeout_sec=1)
-    with pytest.raises(TimeoutError):
-        runner.run(prompt="5")  # sleep 5 seconds
+def test_run_timeout_raises():
+    """subprocess.TimeoutExpired should be translated to TimeoutError."""
+    import subprocess
+    from unittest.mock import patch, MagicMock
+    runner = ClaudeRunner(claude_cli="echo", timeout_sec=1)
+    with patch("subprocess.run") as mock_run:
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="echo", timeout=1)
+        with pytest.raises(TimeoutError):
+            runner.run(prompt="x")
 
 
 def test_run_nonzero_exit_returns_result():
