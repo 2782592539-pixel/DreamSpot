@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # Feishu
     feishu_app_id: str = ""
     feishu_app_secret: str = ""
+    feishu_webhook_url: str = ""  # 飞书自定义机器人 webhook URL (e.g. https://open.feishu.cn/hook/...)
     feishu_webhook_verify_token: str = ""
     feishu_webhook_encrypt_key: str = ""
 

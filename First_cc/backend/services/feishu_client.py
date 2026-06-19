@@ -24,9 +24,11 @@ class FeishuCard:
 
 class FeishuClient:
     def __init__(self, webhook_url: str | None = None, timeout_sec: float = 10.0):
-        # Default to Feishu's incoming webhook endpoint. Real deployment will
-        # set this via MZC_FEISHU_WEBHOOK_URL env var (or pass explicitly).
-        self.webhook_url = webhook_url or "https://open.feishu.cn/open-apis/im/v1/messages"
+        # Resolve webhook URL: explicit arg > MZC_FEISHU_WEBHOOK_URL env var > empty
+        if webhook_url is None:
+            from backend.config import get_settings
+            webhook_url = get_settings().feishu_webhook_url or None
+        self.webhook_url = webhook_url  # may be None — send() will skip in that case
         self.timeout_sec = timeout_sec
 
     def build_task_card(
